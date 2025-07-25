@@ -1,0 +1,299 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+## Problem Statement
+
+For the bat acoustic surveys we conducted in summer 2025, we followed the methods provided by NYS DEC, which included using a **very antiquated** mapping software called "Delorme Atlas," 2009 (**!**) edition.
+
+We recorded bat calls using Scan'r software, the software that drives our AR125 ultrasonic recorder, which creates a time stamp for each recording. By simultaneously using the Delorme Atlas on a laptop with a usb-connected gps unit that came with the software to track our route, we created a set of trackpoints with time stamps every few seconds. These trackpoints were saved by the Delorme software in a now obsolete file type called `.gpl`.
+
+In order to determine the location at which we identified each individual bat, and thus be able to compare e.g. habitat use by species, we need to be able to couple the location information for each `.wav` file from Scan'r with the time stamp on the closest point in the `.gpl` trackfile. There is a software called `Myotisoft Transect` sold by Bat Conservation and Management that does the job of synchronizing gps files with wav files, so we purchased it for a whopping \$99.00.
+
+To test all of this and get it to work, I am using data from the 7 July transect driven through Canton, referred to as "Main".
+
+## Problem
+
+When I load the `.gpl` file into Myotisoft Transect, it reads the file, and starts by identifying the range of dates/times present in the file.
+
+In actuality, our transect began at 9:20 pm (21:20) and ended at approximately 10:46 pm (22:46), all on the same day, 7 July 2025.
+
+However, Myotisoft Transect interpreted our `.gpl` file as starting at 7/7/2025 21:21 and running through 11/21/2005 21:46.
+
+When I tried to sync the folder of `.wav` files with the `.gpl` file, it Myotisoft (reasonably) crashed, because the range of dates between the `.wav` files and the `.gpl` file do not correspond correctly.
+
+## Attempted Solution 1
+
+In the small chance that the time stamps in the `.gpl` file are correct but somehow being misinterpreted by Myotisoft, I tried using the website [MyGeodata](https://mygeodata.cloud/converter/gpl-to-gpx) to convert the `.gpl` file to a Google Earth `.gpx` file. The conversion worked fine in terms of the location of the track points (the lat/longs appear correct), but the timestamp error was not solved by converting to a different file type.
+
+In a spirit of hopefulness, I tried again, this time converting to a `.kml` Google Earth file. Same dice.
+
+## Attempted Solution 2
+
+Realizing that the time stamp errors are "baked" into the `.gpl` file, I needed a way to convert the `.gpl` file to a `.csv` file so that I can try to correct the time stamps with R.
+
+### Convert to `.csv`
+
+I first tried downloading and using [GPSBabel](https://www.gpsbabel.org), a natural resources tried and true freeware that converts among various file types. It can no longer handle `.gpl` files. I was able to convert the `.gpx` file I had made from the original `.gpl` to `.csv`, but not including the timestamps (lat/long converted just fine).
+
+I then returned to MyGeodata where I was able to convert the `.gpl` file to a `.csv` file. That `.csv` file is included here in the data folder and is called `Main-7-July-2025-test-track_points.csv`.
+
+### Repair dates/times in R
+
+Here is the code I'm going to run to try and repair the column with the incorrect time stamps that appears in `Main-7-July-2025-test-track_points.csv`. If I can get this to work, then I will write a "general instructions" and try to get these files for all routes processed ASAP so that we know what we have is correct. Because I still need Myotisoft to sync between gps times and `.wav` times, I will then need to convert the `.csv` with corrected time stamps to some sort of GPS file (unless Myotisoft takes `.csv`. Stay tuned).
+
+Set things up
+
+```{r}
+rm(list = ls())
+library(tidyverse) #note lubridate is included
+library(here)
+```
+
+Pull in data
+
+```{r}
+df <- read_csv(here("data/troubleshooting/Main-7-July-2025-test-track_points.csv"))
+```
+
+Note that I added the "corrected time" column to the .csv manually in Excel and added the first corrected time. We drove a total of 14 routes this summer (10 for our research and 2 for DEC, each driven twice) so may need to do all of this 14 times, depending on if the timestamp issue occurs in all files.
+
+Explore time column
+
+```{r}
+summary(df$time)
+head(df$time, 5)
+```
+
+Note that times are entered including a +00 which presumably has to do with offset from GMT (aka UTC). Not sure if lubridate can handle or if I need to strip first. Quick google search suggests lubridate can handle it. In July, Canton, NY is UTC-4, Eastern Daylight Time.
+
+Use OlsonNames() to figure out tz abbrerviation used by Lubridate
+
+```{r}
+OlsonNames()
+```
+
+Set `time` column as date/time via lubridate
+
+```{r}
+df$time <- ymd_hms(df$time, tz = "EDT")
+df$`corrected time` <- ymd_hms(df$`corrected time`, tz = "EDT")
+```
+
+Now let's look at the times
+
+```{r}
+summary(df$time)
+```
+
+Ok. It looks like we have got times, and the time range, from 01:21:05 to 02:49:43 looks like the correct DURATION. So I think the minutes and seconds are correct, though the dates and hours are not.
+
+To start with, let's use lubridate to determine the DIFFERENCE between the recorded first date time and the actual first date time so that we know how much to add to each of these time units.
+
+```{r}
+my_offset <- difftime(df$`corrected time`[1], df$time[1], tz = "EDT")
+```
+
+Now let's see if adding it back works
+
+```{r}
+df$`corrected time`[2] <- df$time[2]+my_offset
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+df$`corrected time` <- df$time + my_offset
+```
+
+This gives me a `.csv file with corrected date times, but if I can't find an easy way to convert this .csv to a gps file (of a variety of possible types), I won't be able to use it with Myotisoft. 
+
+write the csv and try converting it using MyGeodata. I will report back here. first delete time column and rename `corrected time` to `time` then write file.
+
+```{r}
+df <- df |>
+  select(-time) #delete time column
+
+df <- df |> 
+  rename(time = `corrected time`) #rename column from "corrected time" to "time"
+```
+
+now save
+
+```{r}
+write_csv(df, here("data/troubleshooting/Main-7-July-2025-corrected-track-points.csv"))
+```
+
+When I tried to convert the file, MyGeodata was asking me to pay to convert. Stopped there. 
+
+## Attempted Solution 3
+In doing some googling on how to just use R to convert these `.csv` files to some sort of gps file type, I learned that R doesnt' work with `.gpl` files but can work with `.gpx` files. Delorme is able to convert `.gpl` to `.gpx`. Using Delorme, I thus went ahead created a new `.gpx` file for each of the `.gpl` files. Here I will see if I can:
+
+1. Open a `.gpx` file in R
+2. Fix the date time issue as above.
+3. Export the file as a `.gpx` file for use with Myotisoft. Note: I should really write the code that allows me to ultimately bypass Myotisoft, since it isn't clear what that software is doing. But not now.
+
+### Open a `.gpx` file in R
+There are several packages that allow you to open `.gpx` files, which are a type of XML file, in R, including `XML` and `plotKML` but we need more sophisticated packages to write them out, so we'll just use them. They are the `sf` and `rgdal` packages used for lots of spatial data in R.
+
+So let's get things set:
+```{r}
+rm(list =ls())
+library(tidyverse)
+library(here)
+library(sf) #spatial features package
+
+```
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+st_layers(here("data/troubleshooting/Main-7-July-2025.gpx"))
+```
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+main <- st_read(here("data/troubleshooting/Main-7-July-2025.gpx"), layer = "track_points")
+```
+### Fix the date-times
+Now look at the times and see if they are correct in the .gpx file
+```{r}
+main$time[1:2]
+```
+No - I can see that the very first timestamp is correct, but the others are not.
+
+Let's make a new column to hold the fixed times
+```{r}
+main <- main |>
+  mutate(
+    new_time = NA
+  ) |>
+  relocate(new_time, .after = time) 
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+tz(main$time) #determine timezone for time column
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+Notice that the very first time stamp, in row 1, is correct. So we should just assign it as the correct time for the first cell.
+
+
+Now assign the correct start time to new_time[1]
+
+```{r}
+main$new_time[1] <- "2025-07-07 21:21:05"
+```
+
+Notice that int the first row, the first time stamp is close to the correct date and time, but off by a few hours. So we have to fix rows 2 - 5319 differently.
+
+Start by getting the correct date time for the second row
+
+```{r}
+main$new_time[2] <- "2025-07-07 21:21:04"
+```
+
+Now determine the offset
+```{r}
+my_offset <- difftime(main$new_time[2], main$time[2], tz = "America/New_York")
+my_offset
+```
+
+Now let's see if adding it back works
+
+```{r}
+main$new_time[3] <- main$time[3]+my_offset
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+main$new_time[4:5319] <- main$time[4:5319]+my_offset
+
+summary(main$new_time)
+```
+Looks good!
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+```{r}
+main <- main |>
+  select(-time) |> #delete time column
+  rename(time = new_time) #rename column from "new_time" to "time"
+```
+Now write as .gpx file
+
+
+```{r}
+write_sf(main, 
+         here("data/troubleshooting/Main-7-July-2025-corrected.gpx"), 
+         driver = "GPX", 
+         layer = "track_points", #tells which layer to write
+         dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+```
+Now let's see if we can import it
+
+```{r}
+main1 <- st_read(here("data/troubleshooting/Main-7-July-2025-corrected.gpx"), layer = "track_points")
+plot(main1)
+```
+Looks good. Let's see if it works with Myotisoft!
+I was able to use this file with Myotisoft. It called each bat "unknown", but I think that has to do with the system we used to ID the bats and not the file itself. So now we have the ability to map the location of every `.wav` file we generated.
+
+## Now see `Fix-gpl-files-workflow.qmd` for instructions on how to procees files
+
+## Problem 2
+
+I was able to use R, above, to successfully export our `.csv` file in the same format it was created by MyGeodata. However, MyGeodata only allows 3 file conversions for free before it starts charging.
+
+GPSBabel is a free download, but is clunkier to use. Turns out that it requires that the header column of the csv file have very specific column names in order to read and properly convert a `.csv` to another geospatial file type.
+
+### Attempted Solution 1
+
+My first pass at a solution is to simply take the data frame that I generated and wrote out above, but, before writing it, change some column names.
+
+So as to avoid re-running all my code, let's just read in the `.csv` we wrote out above as the data frame
+
+According to the [GPSBabel manual](https://www.gpsbabel.org/htmldoc-1.10.0/fmt_unicsv.html), the following column titles apply to various forms of data:
+
+::: callout-note
+```         
+The GPSBabel manual contains the following lines: 
+"Unicsv examines the first line of a file to determine the field order and field separator in that file. On write, it tries to figure out what data it has and writes headers and all the data it can.
+
+Fields may be enclosed in double quotes. To include a double quote inside quotes escape it with another double quote.
+
+If the first line contains any unenclosed tabs then the data lines are assumed to be tab separated. Otherwise if the first line contains any unenclosed semicolons then fields are assumed to be separated by semicolons. Otherwise if the first line contains any unenclosed vertical bars then fields are assumed to be separated by vertical bars. Otherwise the fields are assumed to be separated by commas.""
+```
+:::
+
+With that in mind, let's look at the names of the columns that were created when we converted from `.gpl` to `.csv`:
+
+```{r}
+colnames(df)
+```
+Our dataset has `NA` in many of those columns. Let's delete them.
+
+```{r}
+df <- df |> select(where(~!all(is.na(.))))
+colnames(df)
+```
+
+Now let's look at the column names GPSBabel is expecting
+
+| Our names | GPSBabel name |
+|------|------|
+|  X    |   lon   |
+|  Y    |   lat   |
+|   track_fid   |      |
+
+: GPSBabel .csv column headings
+
+### Attempted (Better) Solution 2
+
+A more ideal solution would be to simply bypass GPSBabel or MyGeoportal and use spatial packages from R to convert to e.g. `.gpx`. That may take longer to figure out, and may not be worth the time investment given that:
+
+1.  We only have 14 files to work on and
+2.  We will never use Delorme again, but will learn from this lesson and update our approach for mapping our driving transects!

@@ -1,0 +1,27 @@
+---
+title: "Fix-gpl-files"
+format: html
+editor: visual
+---
+
+## Overview
+
+We conducted N=14 mobile acoustic surveys for bats in summer 2025, using a somewhat archaic system to record our route on gps.
+
+The result was that the files we had that potentially show the location were each bat was observed are not usable.
+
+The solution is to follow these steps. I'm making these notes so that I can work on this sometime before the summer ends.
+
+-   [ ] Convert all 14 `.gpl` files (created in Delorme software) to `.gpx` files using the Delorme software export features.
+
+    -   [ ] Completed 25 July 2025. Files reside in /Lab Group/2024-2025/Summer 2025/bat data issues/GPS logs/Converted to gpx
+
+-   One at a time, import each `.gpx` file into R Studio. Use the code in the file called `fix-gpl-files.qmd` and particularly the section called `Attempted Solution 3` and follow along with the code.
+
+    -   Pay attention to make sure that the time correction offset you use can be applied to all rows of the data frame as you work
+
+    -   Result will be a new `.gpx` file in which the time stamps for each point have been corrected
+
+    -   Export each corrected `.gpx` file and save them in with the Summer 2025 bat recording data on our external hard drive.
+
+        -   This leaves files that are ready to be synced to the corresponding `.wav` files. Still need to figure out how (perhaps using sonobat) to prep these files so that they reflect the ID of the bat contained within the file, but that is not part of the `.gpx` file problem.
