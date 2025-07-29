@@ -2022,3 +2022,5 @@ rm(check)
 ```
 
 ## That's it! All files are now corrected!
+
+I copied these files to the NoCo_Audio hard drive and put them in the `Summer 2025 AR125 bat data/GPS logs/corrected gpx files USE THESE` folder.
