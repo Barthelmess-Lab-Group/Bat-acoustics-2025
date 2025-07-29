@@ -1,0 +1,2024 @@
+---
+title: "fixing-gpx-timestamps-documented"
+format: html
+editor: visual
+---
+
+## Introduction
+
+As noted in `fix-gpl-files.qmd` and `fix-gpl-files-workflow.qmd`, our workflow for recording survey tracks while surveying bats in Summer 2025 was flawed - the time stamps associated with each gps fix in the `.gpl` files was incorrect.
+
+Here I am going to step through the instructions found in both of those files to repair the 10 remaining (of 11 transect files) `.gpx` files, and an additional 4 files (2 from each assigned DEC route) for a total of 14 files. The 18th file was repaired as part of the process of determining how to do the repair. All repaired files are in a folder called `corrected gpx files USE THESE` a copy of which resides in Lab Group/2024-2025/Summer 2025/bat data issues
+
+## Set up
+
+There are several packages that allow you to open `.gpx` files, which are a type of XML file, in R, including `XML` and `plotKML` but we need a more sophisticated package to write them out, so we'll just use the `sf` package (used for lots of spatial data in R).
+
+So let's get things set:
+
+```{r}
+rm(list =ls())
+library(tidyverse)
+library(here)
+library(sf) #spatial features package
+library(rstudioapi)
+```
+
+### Set up a few things to reduce typographic errors
+
+Get names of all the files
+
+```{r}
+target_path <- here("data/troubleshooting/incorrect gpx files")
+output_path <- here("output/corrected gpx files USE THESE")
+files_to_process <- list.files(target_path, "gpx")
+file_names_datetimes <- read.csv(here("data/troubleshooting/incorrect gpx files/file-corrections-metadata.csv"))
+corrected_file_names <- file_names_datetimes$corrected_file_name
+```
+
+Now batch assign date columns in file_names_datetimes to ymd_hms(tz = "America/New_York")
+
+```{r}
+file_names_datetimes <- file_names_datetimes |> 
+  mutate(
+    across(c(first_point_time:last_wav), ~ymd_hms(.x, tz ="America/New_York")))
+
+file_names_datetimes$corrected_first[1] #look at an example
+tz(file_names_datetimes$corrected_first) #check that it worked
+```
+
+|   Process order   | File                                 |
+|:-----------------:|--------------------------------------|
+|         1         | Agriculture1-8-July-2025.gpx         |
+|         2         | Agriculture2-18-July-2025.gpx        |
+|         3         | Agriculture3-14-July-2025.gpx        |
+|         4         | DEC_Canton_18_June_2025.gpx          |
+|         5         | DEC_CantonReverse_21_June_2025.gpx   |
+|         6         | DEC_Winthrop_20_June_2025.gpx        |
+|         7         | DEC_WinthropReverse_23_June_2025.gpx |
+|         8         | Deciduous1-19-July-2025.gpx          |
+|         9         | Deciduous2-15-July-2025.gpx          |
+|        10         | Deciduous3-10-July-2025.gpx          |
+|        11         | Evergreen1-22-July-2025.gpx          |
+|        12         | Evergreen2-9-July-2025.gpx           |
+|        13         | Evergreen3-11-July-2025.gpx          |
+|        14         | Evergreen3REVERSE-11-July-2025.gpx   |
+| Already processed | Main-7-July-2025.gpx                 |
+
+: Files to be processed
+
+## First file
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+st_layers(here(target_path,files_to_process[1]))
+files_to_process[1]
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+main <- st_read(here(target_path,files_to_process[1]), layer = "track_points")
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+main$time[1:2]
+```
+
+No - I can see that the very first timestamp is correct, but the others are not.
+
+Let's make a new column to hold the fixed times
+
+```{r}
+main <- main |>
+  mutate(
+    new_time = NA
+  ) |>
+  relocate(new_time, .after = time) 
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+tz(file_names_datetimes$first_point_time) <- "America/New_York"
+tz(file_names_datetimes$second_point_time) <- "America/New_York"
+tz(file_names_datetimes$third_point_time) <- "America/New_York"
+```
+
+Notice that the very first time stamp, in main row 1, is correct. So we should just assign it as the correct time for the first cell.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+main$new_time[1] <- main$time[1]
+```
+
+Notice that in the first row, the first time stamp is close to the correct date and time, but off by a few hours. So we have to fix rows the remaining rows differently.
+
+Start by getting the correct date time for the second row
+
+```{r}
+main$new_time[1]
+main$time[2]
+main$new_time[2] <- "2025-07-08 21:16:35"
+```
+
+Now determine the offset
+
+```{r}
+my_offset <- difftime(main$new_time[2], main$time[2], tz = "America/New_York")
+my_offset
+```
+
+Now let's see if adding it back works
+
+```{r}
+main$new_time[3] <- main$time[3]+my_offset
+main$new_time[3]
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+main$new_time[4:length(main$time)] <- main$time[4:length(main$time)]+ my_offset
+
+summary(main$new_time)
+head(main$new_time, 5)
+tail(main$new_time, 5)
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+main <- main |>
+  select(-time) |> #delete time column
+  rename(time = new_time) #rename column from "new_time" to "time"
+```
+
+Now write as .gpx file
+
+```{r}
+write_sf(main, 
+         here(paste0(output_path, "/", corrected_file_names[1])), 
+         driver = "GPX", 
+         layer = "track_points", #tells which layer to write
+         dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+```
+
+Now let's see if we can import it
+
+```{r}
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[1])), layer = "track_points")
+plot(check)
+```
+
+## File 2
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+st_layers(here(target_path,files_to_process[2]))
+files_to_process[2]
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+main <- st_read(here(target_path,files_to_process[2]), layer = "track_points")
+plot(main)
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+main$time[1:2]
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+file_names_datetimes[2,]
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+main <- main |>
+  mutate(
+    new_time = NA
+  ) |>
+  relocate(new_time, .after = time) 
+
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+main$new_time[1] <- file_names_datetimes$corrected_first[2] #index 2 because that is the row with metadata for this file
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+my_offset
+```
+
+Now let's see if adding it back works
+
+```{r}
+main$new_time[2] <- main$time[2]+my_offset
+main$new_time[2]
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+head(main$new_time, 5)
+tail(main$new_time, 5)
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+main <- main |>
+  select(-time) |> #delete time column
+  rename(time = new_time) #rename column from "new_time" to "time"
+```
+
+Now write as .gpx file
+
+```{r}
+write_sf(main, 
+         here(paste0(output_path, "/", corrected_file_names[2])), 
+         driver = "GPX", 
+         layer = "track_points", #tells which layer to write
+         dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+```
+
+Now let's see if we can import it
+
+```{r}
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[2])), layer = "track_points")
+plot(check)
+```
+
+## File 3
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[3]))
+
+files_to_process[3]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[3]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:2]
+
+```
+
+I can see that **the first but not the second** timestamps are correct
+
+```{r}
+
+file_names_datetimes[3,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+
+mutate(
+
+new_time = NA
+
+) |>
+
+relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[3] #index 2 because that is the row with metadata for this file
+
+```
+
+Notice that in the first row, the first time stamp is close to the correct date and time, but off by a few hours. So we have to fix rows the remaining rows differently.
+
+Start by getting the correct date time for the second row
+
+```{r}
+main$new_time[1]
+main$time[2]
+main$new_time[2] <-file_names_datetimes$corrected_second[3]
+```
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[2], main$time[2], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[3] <- main$time[3]+my_offset
+
+main$new_time[3]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[4:length(main$time)] <- main$time[4:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+
+here(paste0(output_path, "/", corrected_file_names[3])),
+
+driver = "GPX",
+
+layer = "track_points", #tells which layer to write
+
+dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[3])), layer = "track_points")
+
+plot(check)
+
+```
+
+## File 4
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[4]))
+
+files_to_process[4]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[4]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:2]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[4,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[4] #index 4 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,here(paste0(output_path, "/", corrected_file_names[4])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[4])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 5
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+st_layers(here(target_path,files_to_process[5]))
+
+files_to_process[5]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[5]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:2]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[5,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[5] #index 5 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+  select(-time) |> #delete time column
+  rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[5])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[5])), layer = "track_points")
+
+plot(check)
+
+```
+
+## File 6
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[6])) #sixth file
+
+files_to_process[6]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[6]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:2]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[6,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[6] #index 6 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[6])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[6])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 7
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[7])) #7th file
+
+files_to_process[7]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[7]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I see that the first time stamp is correct, but those afterward are incorrect
+
+```{r}
+
+file_names_datetimes[7,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is correct. So we should just assign it as the correct time for the first cell.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+main$new_time[1] <- main$time[1]
+```
+
+We have to fix rows the remaining rows differently.
+
+Start by getting the correct date time for the second row
+
+```{r}
+main$new_time[1]
+main$time[2]
+main$new_time[2] <- file_names_datetimes$corrected_second[7] #seventh file
+```
+
+Now determine the offset
+
+```{r}
+my_offset <- difftime(main$new_time[2], main$time[2], tz = "America/New_York")
+my_offset
+```
+
+Now let's see if adding it back works
+
+```{r}
+main$new_time[3] <- main$time[3]+my_offset
+main$new_time[3]
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[4:length(main$time)] <- main$time[4:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+  select(-time) |> #delete time column
+  rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[7])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[7])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 8
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[8])) #8th file
+
+files_to_process[8]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[8]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[8,] #8th file
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[8] #index 8 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[8])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[8])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 9
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[9])) #ninth file
+
+files_to_process[9]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[9]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[9,] #ninth file
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[9] #index 9 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[9])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[9])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 10
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[10])) #tenth file
+
+files_to_process[10]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[10]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+The first timestamp is correct, but those after it are not.
+
+Let's make a new column to hold the fixed times
+
+```{r}
+main <- main |>
+  mutate(
+    new_time = NA
+  ) |>
+  relocate(new_time, .after = time) 
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+tz(file_names_datetimes$first_point_time) <- "America/New_York"
+tz(file_names_datetimes$second_point_time) <- "America/New_York"
+tz(file_names_datetimes$third_point_time) <- "America/New_York"
+```
+
+Notice that the very first time stamp, in main row 1, is correct. So we should just assign it as the correct time for the first cell.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+main$new_time[1] <- main$time[1]
+```
+
+Notice that in the first row, the first time stamp is close to the correct date and time, but off by a few hours. So we have to fix rows the remaining rows differently.
+
+Start by getting the correct date time for the second row
+
+```{r}
+main$new_time[1]
+main$time[2]
+main$new_time[2] <- file_names_datetimes$corrected_second[10] #tenth file
+```
+
+Now determine the offset
+
+```{r}
+my_offset <- difftime(main$new_time[2], main$time[2], tz = "America/New_York")
+my_offset
+```
+
+Now let's see if adding it back works
+
+```{r}
+main$new_time[3] <- main$time[3]+my_offset
+main$new_time[3]
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[4:length(main$time)] <- main$time[4:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[10])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[10])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 11
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[11])) #11th file
+
+files_to_process[11]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[11]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[11,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[11] #index 11 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[11])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[11])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 12
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[12])) #12th file
+
+files_to_process[12]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[12]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[12,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[12] #index 2 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[12])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[12])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 13
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[13])) #13th file
+
+files_to_process[13]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[13]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+I can see that **none** of the timestamps are correct. Use `file_names_datetimes` for metadata to repair
+
+```{r}
+
+file_names_datetimes[13,] #13th file
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[13] #index 13 because that is the row with metadata for this file
+
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[2] <- main$time[2]+my_offset
+
+main$new_time[2]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[3:length(main$time)] <- main$time[3:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[13])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[13])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## File 14 - Evergreen 3 Reverse
+
+### Open the `.gpx` file in R
+
+Inspect the track points in a .gpx file before reading it
+
+```{r}
+
+st_layers(here(target_path,files_to_process[14]))
+
+files_to_process[14]
+
+```
+
+The layer I need is called track_points with a crs_name of WGS84
+
+Now let's read in the data
+
+```{r}
+
+main <- st_read(here(target_path,files_to_process[14]), layer = "track_points")
+
+plot(main)
+
+```
+
+### Fix the date-times
+
+Now look at the times and see if they are correct in the .gpx file
+
+```{r}
+
+main$time[1:3]
+
+```
+
+This one is FUNKY (likely because the driver just turned around and drove/recorded/scanned the reverse route immediately after finishing the forward route).
+
+First time is incorrect. Second time is correct. Third time is incorrect.
+
+Need to keep second time, but adjust first and all but second. Will do this somewhat manually.
+
+Adjust first time:
+
+```{r}
+
+file_names_datetimes[14,]
+
+```
+
+Let's make a new column to hold the fixed times
+
+```{r}
+
+main <- main |>
+  mutate(new_time = NA) |>
+  relocate(new_time, .after = time)
+
+main$new_time <- ymd_hms(main$new_time, tz = "America/New_York") #assign new_time as POSIXct
+
+main$time <- ymd_hms(main$time, tz = "America/New_York") #force to EDT
+
+```
+
+Notice that the very first time stamp, in main row 1, is incorrect. So we need to assign the first cell as the correct time.
+
+Now assign the correct start time to new_time\[1\]
+
+```{r}
+
+main$new_time[1] <- file_names_datetimes$corrected_first[14] #index 2 because that is the row with metadata for this file
+
+```
+
+Now just assign second row time as correct:
+
+```{r}
+main$new_time[2] <- main$time[2]
+```
+
+Now, because all rows were off, we will use the diff between row 1 new_time and time to build in our correction factor.
+
+Now determine the offset
+
+```{r}
+
+my_offset <- difftime(main$new_time[1], main$time[1], tz = "America/New_York")
+
+my_offset
+
+```
+
+Now let's see if adding it back works
+
+```{r}
+
+main$new_time[3] <- main$time[3]+my_offset
+
+main$new_time[3]
+
+```
+
+Looks good! Lets apply to whole corrected time column.
+
+```{r}
+
+main$new_time[4:length(main$time)] <- main$time[4:length(main$time)]+ my_offset
+
+summary(main$new_time)
+
+head(main$new_time, 5)
+
+tail(main$new_time, 5)
+
+```
+
+Looks good!
+
+### Write out as .gpx
+
+First, need to get rid of time column and then rename new_time column to "time"
+
+```{r}
+
+main <- main |>
+
+select(-time) |> #delete time column
+
+rename(time = new_time) #rename column from "new_time" to "time"
+
+```
+
+Now write as .gpx file
+
+```{r}
+
+write_sf(main,
+  here(paste0(output_path, "/", corrected_file_names[14])),
+  driver = "GPX",
+  layer = "track_points", #tells which layer to write
+  dataset_options = c("GPX_USE_EXTENSIONS=YES")) #allows driver to keep track_fid and other fields
+
+```
+
+Now let's see if we can import it
+
+```{r}
+
+check <- st_read(here(paste0(output_path, "/", corrected_file_names[14])), layer = "track_points")
+
+plot(check)
+rm(check)
+```
+
+## That's it! All files are now corrected!

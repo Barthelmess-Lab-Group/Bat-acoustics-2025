@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.551">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Untitled</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="fix-gpl-files_files/libs/clipboard/clipboard.min.js"></script>
+<script src="fix-gpl-files_files/libs/quarto-html/quarto.js"></script>
+<script src="fix-gpl-files_files/libs/quarto-html/popper.min.js"></script>
+<script src="fix-gpl-files_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="fix-gpl-files_files/libs/quarto-html/anchor.min.js"></script>
+<link href="fix-gpl-files_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="fix-gpl-files_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="fix-gpl-files_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="fix-gpl-files_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="fix-gpl-files_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Untitled</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="problem-statement" class="level2">
+<h2 class="anchored" data-anchor-id="problem-statement">Problem Statement</h2>
+<p>For the bat acoustic surveys we conducted in summer 2025, we followed the methods provided by NYS DEC, which included using a <strong>very antiquated</strong> mapping software called “Delorme Atlas,” 2009 (<strong>!</strong>) edition.</p>
+<p>We recorded bat calls using Scan’r software, the software that drives our AR125 ultrasonic recorder, which creates a time stamp for each recording. By simultaneously using the Delorme Atlas on a laptop with a usb-connected gps unit that came with the software to track our route, we created a set of trackpoints with time stamps every few seconds. These trackpoints were saved by the Delorme software in a now obsolete file type called <code>.gpl</code>.</p>
+<p>In order to determine the location at which we identified each individual bat, and thus be able to compare e.g.&nbsp;habitat use by species, we need to be able to couple the location information for each <code>.wav</code> file from Scan’r with the time stamp on the closest point in the <code>.gpl</code> trackfile. There is a software called <code>Myotisoft Transect</code> sold by Bat Conservation and Management that does the job of synchronizing gps files with wav files, so we purchased it for a whopping $99.00.</p>
+<p>To test all of this and get it to work, I am using data from the 7 July transect driven through Canton, referred to as “Main”.</p>
+</section>
+<section id="problem" class="level2">
+<h2 class="anchored" data-anchor-id="problem">Problem</h2>
+<p>When I load the <code>.gpl</code> file into Myotisoft Transect, it reads the file, and starts by identifying the range of dates/times present in the file.</p>
+<p>In actuality, our transect began at 9:20 pm (21:20) and ended at approximately 10:46 pm (22:46), all on the same day, 7 July 2025.</p>
+<p>However, Myotisoft Transect interpreted our <code>.gpl</code> file as starting at 7/7/2025 21:21 and running through 11/21/2005 21:46.</p>
+<p>When I tried to sync the folder of <code>.wav</code> files with the <code>.gpl</code> file, it Myotisoft (reasonably) crashed, because the range of dates between the <code>.wav</code> files and the <code>.gpl</code> file do not correspond correctly.</p>
+</section>
+<section id="attempted-solution-1" class="level2">
+<h2 class="anchored" data-anchor-id="attempted-solution-1">Attempted Solution 1</h2>
+<p>In the small chance that the time stamps in the <code>.gpl</code> file are correct but somehow being misinterpreted by Myotisoft, I tried using the website <a href="https://mygeodata.cloud/converter/gpl-to-gpx">MyGeodata</a> to convert the <code>.gpl</code> file to a Google Earth <code>.gpx</code> file. The conversion worked fine in terms of the location of the track points (the lat/longs appear correct), but the timestamp error was not solved by converting to a different file type.</p>
+<p>In a spirit of hopefulness, I tried again, this time converting to a <code>.kml</code> Google Earth file. Same dice.</p>
+</section>
+<section id="attempted-solution-2" class="level2">
+<h2 class="anchored" data-anchor-id="attempted-solution-2">Attempted Solution 2</h2>
+<p>Realizing that the time stamp errors are “baked” into the <code>.gpl</code> file, I needed a way to convert the <code>.gpl</code> file to a <code>.csv</code> file so that I can try to correct the time stamps with R.</p>
+<section id="convert-to-.csv" class="level3">
+<h3 class="anchored" data-anchor-id="convert-to-.csv">Convert to <code>.csv</code></h3>
+<p>I first tried downloading and using <a href="https://www.gpsbabel.org">GPSBabel</a>, a natural resources tried and true freeware that converts among various file types. It can no longer handle <code>.gpl</code> files. I was able to convert the <code>.gpx</code> file I had made from the original <code>.gpl</code> to <code>.csv</code>, but not including the timestamps (lat/long converted just fine).</p>
+<p>I then returned to MyGeodata where I was able to convert the <code>.gpl</code> file to a <code>.csv</code> file. That <code>.csv</code> file is included here in the data folder and is called <code>Main-7-July-2025-test-track_points.csv</code>.</p>
+</section>
+<section id="repair-datestimes-in-r" class="level3">
+<h3 class="anchored" data-anchor-id="repair-datestimes-in-r">Repair dates/times in R</h3>
+<p>Here is the code I’m going to run to try and repair the column with the incorrect time stamps that appears in <code>Main-7-July-2025-test-track_points.csv</code>. If I can get this to work, then I will write a “general instructions” and try to get these files for all routes processed ASAP so that we know what we have is correct. Because I still need Myotisoft to sync between gps times and <code>.wav</code> times, I will then need to convert the <code>.csv</code> with corrected time stamps to some sort of GPS file (unless Myotisoft takes <code>.csv</code>. Stay tuned).</p>
+<p>Set things up</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse) <span class="co">#note lubridate is included</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.2     ✔ tibble    3.3.0
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+✔ purrr     1.0.4     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>here() starts at /Users/barthelmess/Library/CloudStorage/Dropbox/R/Bat-acoustics-2025</code></pre>
+</div>
+</div>
+<p>Pull in data</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/Main-7-July-2025-test-track_points.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5260 Columns: 29
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (2): time, corrected time
+dbl  (7): X, Y, track_fid, track_seg_id, track_seg_point_id, ele, fix
+lgl (20): magvar, geoidheight, name, cmt, desc, src, link1_href, link1_text,...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>Note that I added the “corrected time” column to the .csv manually in Excel and added the first corrected time. We drove a total of 14 routes this summer (10 for our research and 2 for DEC, each driven twice) so may need to do all of this 14 times, depending on if the timestamp issue occurs in all files.</p>
+<p>Explore time column</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df<span class="sc">$</span>time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Length     Class      Mode 
+     5260 character character </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df<span class="sc">$</span>time, <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2005/11/22 01:21:05+00" "2005/11/22 01:21:06+00" "2005/11/22 01:21:08+00"
+[4] "2005/11/22 01:21:09+00" "2005/11/22 01:21:10+00"</code></pre>
+</div>
+</div>
+<p>Note that times are entered including a +00 which presumably has to do with offset from GMT (aka UTC). Not sure if lubridate can handle or if I need to strip first. Quick google search suggests lubridate can handle it. In July, Canton, NY is UTC-4, Eastern Daylight Time.</p>
+<p>Use OlsonNames() to figure out tz abbrerviation used by Lubridate</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">OlsonNames</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  [1] "Africa/Abidjan"                   "Africa/Accra"                    
+  [3] "Africa/Addis_Ababa"               "Africa/Algiers"                  
+  [5] "Africa/Asmara"                    "Africa/Asmera"                   
+  [7] "Africa/Bamako"                    "Africa/Bangui"                   
+  [9] "Africa/Banjul"                    "Africa/Bissau"                   
+ [11] "Africa/Blantyre"                  "Africa/Brazzaville"              
+ [13] "Africa/Bujumbura"                 "Africa/Cairo"                    
+ [15] "Africa/Casablanca"                "Africa/Ceuta"                    
+ [17] "Africa/Conakry"                   "Africa/Dakar"                    
+ [19] "Africa/Dar_es_Salaam"             "Africa/Djibouti"                 
+ [21] "Africa/Douala"                    "Africa/El_Aaiun"                 
+ [23] "Africa/Freetown"                  "Africa/Gaborone"                 
+ [25] "Africa/Harare"                    "Africa/Johannesburg"             
+ [27] "Africa/Juba"                      "Africa/Kampala"                  
+ [29] "Africa/Khartoum"                  "Africa/Kigali"                   
+ [31] "Africa/Kinshasa"                  "Africa/Lagos"                    
+ [33] "Africa/Libreville"                "Africa/Lome"                     
+ [35] "Africa/Luanda"                    "Africa/Lubumbashi"               
+ [37] "Africa/Lusaka"                    "Africa/Malabo"                   
+ [39] "Africa/Maputo"                    "Africa/Maseru"                   
+ [41] "Africa/Mbabane"                   "Africa/Mogadishu"                
+ [43] "Africa/Monrovia"                  "Africa/Nairobi"                  
+ [45] "Africa/Ndjamena"                  "Africa/Niamey"                   
+ [47] "Africa/Nouakchott"                "Africa/Ouagadougou"              
+ [49] "Africa/Porto-Novo"                "Africa/Sao_Tome"                 
+ [51] "Africa/Timbuktu"                  "Africa/Tripoli"                  
+ [53] "Africa/Tunis"                     "Africa/Windhoek"                 
+ [55] "America/Adak"                     "America/Anchorage"               
+ [57] "America/Anguilla"                 "America/Antigua"                 
+ [59] "America/Araguaina"                "America/Argentina/Buenos_Aires"  
+ [61] "America/Argentina/Catamarca"      "America/Argentina/ComodRivadavia"
+ [63] "America/Argentina/Cordoba"        "America/Argentina/Jujuy"         
+ [65] "America/Argentina/La_Rioja"       "America/Argentina/Mendoza"       
+ [67] "America/Argentina/Rio_Gallegos"   "America/Argentina/Salta"         
+ [69] "America/Argentina/San_Juan"       "America/Argentina/San_Luis"      
+ [71] "America/Argentina/Tucuman"        "America/Argentina/Ushuaia"       
+ [73] "America/Aruba"                    "America/Asuncion"                
+ [75] "America/Atikokan"                 "America/Atka"                    
+ [77] "America/Bahia"                    "America/Bahia_Banderas"          
+ [79] "America/Barbados"                 "America/Belem"                   
+ [81] "America/Belize"                   "America/Blanc-Sablon"            
+ [83] "America/Boa_Vista"                "America/Bogota"                  
+ [85] "America/Boise"                    "America/Buenos_Aires"            
+ [87] "America/Cambridge_Bay"            "America/Campo_Grande"            
+ [89] "America/Cancun"                   "America/Caracas"                 
+ [91] "America/Catamarca"                "America/Cayenne"                 
+ [93] "America/Cayman"                   "America/Chicago"                 
+ [95] "America/Chihuahua"                "America/Ciudad_Juarez"           
+ [97] "America/Coral_Harbour"            "America/Cordoba"                 
+ [99] "America/Costa_Rica"               "America/Coyhaique"               
+[101] "America/Creston"                  "America/Cuiaba"                  
+[103] "America/Curacao"                  "America/Danmarkshavn"            
+[105] "America/Dawson"                   "America/Dawson_Creek"            
+[107] "America/Denver"                   "America/Detroit"                 
+[109] "America/Dominica"                 "America/Edmonton"                
+[111] "America/Eirunepe"                 "America/El_Salvador"             
+[113] "America/Ensenada"                 "America/Fort_Nelson"             
+[115] "America/Fort_Wayne"               "America/Fortaleza"               
+[117] "America/Glace_Bay"                "America/Godthab"                 
+[119] "America/Goose_Bay"                "America/Grand_Turk"              
+[121] "America/Grenada"                  "America/Guadeloupe"              
+[123] "America/Guatemala"                "America/Guayaquil"               
+[125] "America/Guyana"                   "America/Halifax"                 
+[127] "America/Havana"                   "America/Hermosillo"              
+[129] "America/Indiana/Indianapolis"     "America/Indiana/Knox"            
+[131] "America/Indiana/Marengo"          "America/Indiana/Petersburg"      
+[133] "America/Indiana/Tell_City"        "America/Indiana/Vevay"           
+[135] "America/Indiana/Vincennes"        "America/Indiana/Winamac"         
+[137] "America/Indianapolis"             "America/Inuvik"                  
+[139] "America/Iqaluit"                  "America/Jamaica"                 
+[141] "America/Jujuy"                    "America/Juneau"                  
+[143] "America/Kentucky/Louisville"      "America/Kentucky/Monticello"     
+[145] "America/Knox_IN"                  "America/Kralendijk"              
+[147] "America/La_Paz"                   "America/Lima"                    
+[149] "America/Los_Angeles"              "America/Louisville"              
+[151] "America/Lower_Princes"            "America/Maceio"                  
+[153] "America/Managua"                  "America/Manaus"                  
+[155] "America/Marigot"                  "America/Martinique"              
+[157] "America/Matamoros"                "America/Mazatlan"                
+[159] "America/Mendoza"                  "America/Menominee"               
+[161] "America/Merida"                   "America/Metlakatla"              
+[163] "America/Mexico_City"              "America/Miquelon"                
+[165] "America/Moncton"                  "America/Monterrey"               
+[167] "America/Montevideo"               "America/Montreal"                
+[169] "America/Montserrat"               "America/Nassau"                  
+[171] "America/New_York"                 "America/Nipigon"                 
+[173] "America/Nome"                     "America/Noronha"                 
+[175] "America/North_Dakota/Beulah"      "America/North_Dakota/Center"     
+[177] "America/North_Dakota/New_Salem"   "America/Nuuk"                    
+[179] "America/Ojinaga"                  "America/Panama"                  
+[181] "America/Pangnirtung"              "America/Paramaribo"              
+[183] "America/Phoenix"                  "America/Port_of_Spain"           
+[185] "America/Port-au-Prince"           "America/Porto_Acre"              
+[187] "America/Porto_Velho"              "America/Puerto_Rico"             
+[189] "America/Punta_Arenas"             "America/Rainy_River"             
+[191] "America/Rankin_Inlet"             "America/Recife"                  
+[193] "America/Regina"                   "America/Resolute"                
+[195] "America/Rio_Branco"               "America/Rosario"                 
+[197] "America/Santa_Isabel"             "America/Santarem"                
+[199] "America/Santiago"                 "America/Santo_Domingo"           
+[201] "America/Sao_Paulo"                "America/Scoresbysund"            
+[203] "America/Shiprock"                 "America/Sitka"                   
+[205] "America/St_Barthelemy"            "America/St_Johns"                
+[207] "America/St_Kitts"                 "America/St_Lucia"                
+[209] "America/St_Thomas"                "America/St_Vincent"              
+[211] "America/Swift_Current"            "America/Tegucigalpa"             
+[213] "America/Thule"                    "America/Thunder_Bay"             
+[215] "America/Tijuana"                  "America/Toronto"                 
+[217] "America/Tortola"                  "America/Vancouver"               
+[219] "America/Virgin"                   "America/Whitehorse"              
+[221] "America/Winnipeg"                 "America/Yakutat"                 
+[223] "America/Yellowknife"              "Antarctica/Casey"                
+[225] "Antarctica/Davis"                 "Antarctica/DumontDUrville"       
+[227] "Antarctica/Macquarie"             "Antarctica/Mawson"               
+[229] "Antarctica/McMurdo"               "Antarctica/Palmer"               
+[231] "Antarctica/Rothera"               "Antarctica/South_Pole"           
+[233] "Antarctica/Syowa"                 "Antarctica/Troll"                
+[235] "Antarctica/Vostok"                "Arctic/Longyearbyen"             
+[237] "Asia/Aden"                        "Asia/Almaty"                     
+[239] "Asia/Amman"                       "Asia/Anadyr"                     
+[241] "Asia/Aqtau"                       "Asia/Aqtobe"                     
+[243] "Asia/Ashgabat"                    "Asia/Ashkhabad"                  
+[245] "Asia/Atyrau"                      "Asia/Baghdad"                    
+[247] "Asia/Bahrain"                     "Asia/Baku"                       
+[249] "Asia/Bangkok"                     "Asia/Barnaul"                    
+[251] "Asia/Beirut"                      "Asia/Bishkek"                    
+[253] "Asia/Brunei"                      "Asia/Calcutta"                   
+[255] "Asia/Chita"                       "Asia/Choibalsan"                 
+[257] "Asia/Chongqing"                   "Asia/Chungking"                  
+[259] "Asia/Colombo"                     "Asia/Dacca"                      
+[261] "Asia/Damascus"                    "Asia/Dhaka"                      
+[263] "Asia/Dili"                        "Asia/Dubai"                      
+[265] "Asia/Dushanbe"                    "Asia/Famagusta"                  
+[267] "Asia/Gaza"                        "Asia/Harbin"                     
+[269] "Asia/Hebron"                      "Asia/Ho_Chi_Minh"                
+[271] "Asia/Hong_Kong"                   "Asia/Hovd"                       
+[273] "Asia/Irkutsk"                     "Asia/Istanbul"                   
+[275] "Asia/Jakarta"                     "Asia/Jayapura"                   
+[277] "Asia/Jerusalem"                   "Asia/Kabul"                      
+[279] "Asia/Kamchatka"                   "Asia/Karachi"                    
+[281] "Asia/Kashgar"                     "Asia/Kathmandu"                  
+[283] "Asia/Katmandu"                    "Asia/Khandyga"                   
+[285] "Asia/Kolkata"                     "Asia/Krasnoyarsk"                
+[287] "Asia/Kuala_Lumpur"                "Asia/Kuching"                    
+[289] "Asia/Kuwait"                      "Asia/Macao"                      
+[291] "Asia/Macau"                       "Asia/Magadan"                    
+[293] "Asia/Makassar"                    "Asia/Manila"                     
+[295] "Asia/Muscat"                      "Asia/Nicosia"                    
+[297] "Asia/Novokuznetsk"                "Asia/Novosibirsk"                
+[299] "Asia/Omsk"                        "Asia/Oral"                       
+[301] "Asia/Phnom_Penh"                  "Asia/Pontianak"                  
+[303] "Asia/Pyongyang"                   "Asia/Qatar"                      
+[305] "Asia/Qostanay"                    "Asia/Qyzylorda"                  
+[307] "Asia/Rangoon"                     "Asia/Riyadh"                     
+[309] "Asia/Saigon"                      "Asia/Sakhalin"                   
+[311] "Asia/Samarkand"                   "Asia/Seoul"                      
+[313] "Asia/Shanghai"                    "Asia/Singapore"                  
+[315] "Asia/Srednekolymsk"               "Asia/Taipei"                     
+[317] "Asia/Tashkent"                    "Asia/Tbilisi"                    
+[319] "Asia/Tehran"                      "Asia/Tel_Aviv"                   
+[321] "Asia/Thimbu"                      "Asia/Thimphu"                    
+[323] "Asia/Tokyo"                       "Asia/Tomsk"                      
+[325] "Asia/Ujung_Pandang"               "Asia/Ulaanbaatar"                
+[327] "Asia/Ulan_Bator"                  "Asia/Urumqi"                     
+[329] "Asia/Ust-Nera"                    "Asia/Vientiane"                  
+[331] "Asia/Vladivostok"                 "Asia/Yakutsk"                    
+[333] "Asia/Yangon"                      "Asia/Yekaterinburg"              
+[335] "Asia/Yerevan"                     "Atlantic/Azores"                 
+[337] "Atlantic/Bermuda"                 "Atlantic/Canary"                 
+[339] "Atlantic/Cape_Verde"              "Atlantic/Faeroe"                 
+[341] "Atlantic/Faroe"                   "Atlantic/Jan_Mayen"              
+[343] "Atlantic/Madeira"                 "Atlantic/Reykjavik"              
+[345] "Atlantic/South_Georgia"           "Atlantic/St_Helena"              
+[347] "Atlantic/Stanley"                 "Australia/ACT"                   
+[349] "Australia/Adelaide"               "Australia/Brisbane"              
+[351] "Australia/Broken_Hill"            "Australia/Canberra"              
+[353] "Australia/Currie"                 "Australia/Darwin"                
+[355] "Australia/Eucla"                  "Australia/Hobart"                
+[357] "Australia/LHI"                    "Australia/Lindeman"              
+[359] "Australia/Lord_Howe"              "Australia/Melbourne"             
+[361] "Australia/North"                  "Australia/NSW"                   
+[363] "Australia/Perth"                  "Australia/Queensland"            
+[365] "Australia/South"                  "Australia/Sydney"                
+[367] "Australia/Tasmania"               "Australia/Victoria"              
+[369] "Australia/West"                   "Australia/Yancowinna"            
+[371] "Brazil/Acre"                      "Brazil/DeNoronha"                
+[373] "Brazil/East"                      "Brazil/West"                     
+[375] "Canada/Atlantic"                  "Canada/Central"                  
+[377] "Canada/Eastern"                   "Canada/Mountain"                 
+[379] "Canada/Newfoundland"              "Canada/Pacific"                  
+[381] "Canada/Saskatchewan"              "Canada/Yukon"                    
+[383] "CET"                              "Chile/Continental"               
+[385] "Chile/EasterIsland"               "CST6CDT"                         
+[387] "Cuba"                             "EET"                             
+[389] "Egypt"                            "Eire"                            
+[391] "EST"                              "EST5EDT"                         
+[393] "Etc/GMT"                          "Etc/GMT-0"                       
+[395] "Etc/GMT-1"                        "Etc/GMT-10"                      
+[397] "Etc/GMT-11"                       "Etc/GMT-12"                      
+[399] "Etc/GMT-13"                       "Etc/GMT-14"                      
+[401] "Etc/GMT-2"                        "Etc/GMT-3"                       
+[403] "Etc/GMT-4"                        "Etc/GMT-5"                       
+[405] "Etc/GMT-6"                        "Etc/GMT-7"                       
+[407] "Etc/GMT-8"                        "Etc/GMT-9"                       
+[409] "Etc/GMT+0"                        "Etc/GMT+1"                       
+[411] "Etc/GMT+10"                       "Etc/GMT+11"                      
+[413] "Etc/GMT+12"                       "Etc/GMT+2"                       
+[415] "Etc/GMT+3"                        "Etc/GMT+4"                       
+[417] "Etc/GMT+5"                        "Etc/GMT+6"                       
+[419] "Etc/GMT+7"                        "Etc/GMT+8"                       
+[421] "Etc/GMT+9"                        "Etc/GMT0"                        
+[423] "Etc/Greenwich"                    "Etc/UCT"                         
+[425] "Etc/Universal"                    "Etc/UTC"                         
+[427] "Etc/Zulu"                         "Europe/Amsterdam"                
+[429] "Europe/Andorra"                   "Europe/Astrakhan"                
+[431] "Europe/Athens"                    "Europe/Belfast"                  
+[433] "Europe/Belgrade"                  "Europe/Berlin"                   
+[435] "Europe/Bratislava"                "Europe/Brussels"                 
+[437] "Europe/Bucharest"                 "Europe/Budapest"                 
+[439] "Europe/Busingen"                  "Europe/Chisinau"                 
+[441] "Europe/Copenhagen"                "Europe/Dublin"                   
+[443] "Europe/Gibraltar"                 "Europe/Guernsey"                 
+[445] "Europe/Helsinki"                  "Europe/Isle_of_Man"              
+[447] "Europe/Istanbul"                  "Europe/Jersey"                   
+[449] "Europe/Kaliningrad"               "Europe/Kiev"                     
+[451] "Europe/Kirov"                     "Europe/Kyiv"                     
+[453] "Europe/Lisbon"                    "Europe/Ljubljana"                
+[455] "Europe/London"                    "Europe/Luxembourg"               
+[457] "Europe/Madrid"                    "Europe/Malta"                    
+[459] "Europe/Mariehamn"                 "Europe/Minsk"                    
+[461] "Europe/Monaco"                    "Europe/Moscow"                   
+[463] "Europe/Nicosia"                   "Europe/Oslo"                     
+[465] "Europe/Paris"                     "Europe/Podgorica"                
+[467] "Europe/Prague"                    "Europe/Riga"                     
+[469] "Europe/Rome"                      "Europe/Samara"                   
+[471] "Europe/San_Marino"                "Europe/Sarajevo"                 
+[473] "Europe/Saratov"                   "Europe/Simferopol"               
+[475] "Europe/Skopje"                    "Europe/Sofia"                    
+[477] "Europe/Stockholm"                 "Europe/Tallinn"                  
+[479] "Europe/Tirane"                    "Europe/Tiraspol"                 
+[481] "Europe/Ulyanovsk"                 "Europe/Uzhgorod"                 
+[483] "Europe/Vaduz"                     "Europe/Vatican"                  
+[485] "Europe/Vienna"                    "Europe/Vilnius"                  
+[487] "Europe/Volgograd"                 "Europe/Warsaw"                   
+[489] "Europe/Zagreb"                    "Europe/Zaporozhye"               
+[491] "Europe/Zurich"                    "Factory"                         
+[493] "GB"                               "GB-Eire"                         
+[495] "GMT"                              "GMT-0"                           
+[497] "GMT+0"                            "GMT0"                            
+[499] "Greenwich"                        "Hongkong"                        
+[501] "HST"                              "Iceland"                         
+[503] "Indian/Antananarivo"              "Indian/Chagos"                   
+[505] "Indian/Christmas"                 "Indian/Cocos"                    
+[507] "Indian/Comoro"                    "Indian/Kerguelen"                
+[509] "Indian/Mahe"                      "Indian/Maldives"                 
+[511] "Indian/Mauritius"                 "Indian/Mayotte"                  
+[513] "Indian/Reunion"                   "Iran"                            
+[515] "Israel"                           "Jamaica"                         
+[517] "Japan"                            "Kwajalein"                       
+[519] "Libya"                            "MET"                             
+[521] "Mexico/BajaNorte"                 "Mexico/BajaSur"                  
+[523] "Mexico/General"                   "MST"                             
+[525] "MST7MDT"                          "Navajo"                          
+[527] "NZ"                               "NZ-CHAT"                         
+[529] "Pacific/Apia"                     "Pacific/Auckland"                
+[531] "Pacific/Bougainville"             "Pacific/Chatham"                 
+[533] "Pacific/Chuuk"                    "Pacific/Easter"                  
+[535] "Pacific/Efate"                    "Pacific/Enderbury"               
+[537] "Pacific/Fakaofo"                  "Pacific/Fiji"                    
+[539] "Pacific/Funafuti"                 "Pacific/Galapagos"               
+[541] "Pacific/Gambier"                  "Pacific/Guadalcanal"             
+[543] "Pacific/Guam"                     "Pacific/Honolulu"                
+[545] "Pacific/Johnston"                 "Pacific/Kanton"                  
+[547] "Pacific/Kiritimati"               "Pacific/Kosrae"                  
+[549] "Pacific/Kwajalein"                "Pacific/Majuro"                  
+[551] "Pacific/Marquesas"                "Pacific/Midway"                  
+[553] "Pacific/Nauru"                    "Pacific/Niue"                    
+[555] "Pacific/Norfolk"                  "Pacific/Noumea"                  
+[557] "Pacific/Pago_Pago"                "Pacific/Palau"                   
+[559] "Pacific/Pitcairn"                 "Pacific/Pohnpei"                 
+[561] "Pacific/Ponape"                   "Pacific/Port_Moresby"            
+[563] "Pacific/Rarotonga"                "Pacific/Saipan"                  
+[565] "Pacific/Samoa"                    "Pacific/Tahiti"                  
+[567] "Pacific/Tarawa"                   "Pacific/Tongatapu"               
+[569] "Pacific/Truk"                     "Pacific/Wake"                    
+[571] "Pacific/Wallis"                   "Pacific/Yap"                     
+[573] "Poland"                           "Portugal"                        
+[575] "PRC"                              "PST8PDT"                         
+[577] "ROC"                              "ROK"                             
+[579] "Singapore"                        "Turkey"                          
+[581] "UCT"                              "Universal"                       
+[583] "US/Alaska"                        "US/Aleutian"                     
+[585] "US/Arizona"                       "US/Central"                      
+[587] "US/East-Indiana"                  "US/Eastern"                      
+[589] "US/Hawaii"                        "US/Indiana-Starke"               
+[591] "US/Michigan"                      "US/Mountain"                     
+[593] "US/Pacific"                       "US/Samoa"                        
+[595] "UTC"                              "W-SU"                            
+[597] "WET"                              "Zulu"                            
+attr(,"Version")
+[1] "2025b"</code></pre>
+</div>
+</div>
+<p>Set <code>time</code> column as date/time via lubridate</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>time <span class="ot">&lt;-</span> <span class="fu">ymd_hms</span>(df<span class="sc">$</span>time, <span class="at">tz =</span> <span class="st">"EDT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Date in ISO8601 format; converting timezone from UTC to "EDT".</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span><span class="st">`</span><span class="at">corrected time</span><span class="st">`</span> <span class="ot">&lt;-</span> <span class="fu">ymd_hms</span>(df<span class="sc">$</span><span class="st">`</span><span class="at">corrected time</span><span class="st">`</span>, <span class="at">tz =</span> <span class="st">"EDT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Date in ISO8601 format; converting timezone from UTC to "EDT".</code></pre>
+</div>
+</div>
+<p>Now let’s look at the times</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df<span class="sc">$</span>time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in as.POSIXlt.POSIXct(x, tz): unknown timezone 'EDT'</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 Min.               1st Qu.                Median 
+"2005-11-22 01:21:05" "2005-11-22 01:43:35" "2005-11-22 02:05:31" 
+                 Mean               3rd Qu.                  Max. 
+"2005-11-22 02:05:31" "2005-11-22 02:27:26" "2005-11-22 02:49:43" </code></pre>
+</div>
+</div>
+<p>Ok. It looks like we have got times, and the time range, from 01:21:05 to 02:49:43 looks like the correct DURATION. So I think the minutes and seconds are correct, though the dates and hours are not.</p>
+<p>To start with, let’s use lubridate to determine the DIFFERENCE between the recorded first date time and the actual first date time so that we know how much to add to each of these time units.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>my_offset <span class="ot">&lt;-</span> <span class="fu">difftime</span>(df<span class="sc">$</span><span class="st">`</span><span class="at">corrected time</span><span class="st">`</span>[<span class="dv">1</span>], df<span class="sc">$</span>time[<span class="dv">1</span>], <span class="at">tz =</span> <span class="st">"EDT"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now let’s see if adding it back works</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span><span class="st">`</span><span class="at">corrected time</span><span class="st">`</span>[<span class="dv">2</span>] <span class="ot">&lt;-</span> df<span class="sc">$</span>time[<span class="dv">2</span>]<span class="sc">+</span>my_offset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Looks good! Lets apply to whole corrected time column.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span><span class="st">`</span><span class="at">corrected time</span><span class="st">`</span> <span class="ot">&lt;-</span> df<span class="sc">$</span>time <span class="sc">+</span> my_offset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I think it worked!</p>
+<p>write the csv and try converting it using MyGeodata. I will report back here. first delete time column and rename <code>corrected time</code> to <code>time</code> then write file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>time) <span class="co">#delete time column</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> </span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">time =</span> <span class="st">`</span><span class="at">corrected time</span><span class="st">`</span>) <span class="co">#rename column from "corrected time" to "time"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>now save</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(df, <span class="fu">here</span>(<span class="st">"data/Main-7-July-2025-corrected-track-points.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="problem-2" class="level2">
+<h2 class="anchored" data-anchor-id="problem-2">Problem 2</h2>
+<p>I was able to use R, above, to successfully export our <code>.csv</code> file in the same format it was created by MyGeodata. However, MyGeodata only allows 3 file conversions for free before it starts charging.</p>
+<p>GPSBabel is a free download, but is clunkier to use. Turns out that it requires that the header column of the csv file have very specific column names in order to read and properly convert a <code>.csv</code> to another geospatial file type.</p>
+<section id="attempted-solution-1-1" class="level3">
+<h3 class="anchored" data-anchor-id="attempted-solution-1-1">Attempted Solution 1</h3>
+<p>My first pass at a solution is to simply take the data frame that I generated and wrote out above, but, before writing it, change some column names.</p>
+<p>So as to avoid re-running all my code, let’s just read in the <code>.csv</code> we wrote out above as the data frame</p>
+<p>According to the <a href="https://www.gpsbabel.org/htmldoc-1.10.0/fmt_unicsv.html">GPSBabel manual</a>, the following column titles apply to various forms of data:</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<pre><code>Unicsv examines the first line of a file to determine the field order and field separator in that file. On write, it tries to figure out what data it has and writes headers and all the data it can.</code></pre>
+</div>
+</div>
+<table class="table">
+<caption>GPSBabel .csv column headings</caption>
+<thead>
+<tr class="header">
+<th>Col1</th>
+<th>Col2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td></td>
+<td></td>
+</tr>
+<tr class="odd">
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attempted-better-solution-2" class="level3">
+<h3 class="anchored" data-anchor-id="attempted-better-solution-2">Attempted (Better) Solution 2</h3>
+<p>A more ideal solution would be to simply bypass GPSBabel or MyGeoportal and use spatial packages from R to convert to e.g.&nbsp;<code>.gpx</code>. That may take longer to figure out, and may not be worth the time investment given that:</p>
+<ol type="1">
+<li>We only have 14 files to work on and</li>
+<li>We will never use Delorme again, but will learn from this lesson and update our approach for mapping our driving transects!</li>
+</ol>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

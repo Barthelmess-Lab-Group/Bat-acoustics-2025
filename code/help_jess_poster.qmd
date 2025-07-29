@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+## Goals
+Get some of the preliminary data for Jess' poster ready
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(here)
+
+bats <- read_csv(here("data/Summer2025_AR125_Data.csv"))
+```
+Now we need a subset of the data
+
+We want all the data that is NOT from DEC (Route_Type)
+
+```{r}
+bats <- bats |>
+  filter(Route_Type != "DEC")
+
+unique(bats$Route_Type)
+```
+Now we need some summary statistics
+
+We need average "accurate number detected" for each type of survey route
+
+```{r}
+bat_summary <- bats |>
+  group_by(Route_Type, Species) |>
+  summarise(
+    mean_bats = mean(Accurate_Number_Detecteed, na.rm = T),
+    sd_bats = sd(Accurate_Number_Detecteed, na.rm = T)
+  )
+```
+Now let's plot the data!
+
+```{r}
+ggplot(bat_summary, aes(Route_Type, mean_bats, fill = Species))+
+  geom_col(position = "dodge")+
+  labs(x = "Habitat type", y = "Mean number detected")+
+  theme_bw()
+
+ggsave(here("output/plot1.png"),device = "png")
+```
+
+Here's another way to plot this
+
+```{r}
+ggplot(bat_summary, aes(Species, mean_bats, fill = Species))+
+  geom_col(position = "dodge")+
+  labs(x = "Habitat type", y = "Mean number detected")+
+  facet_wrap(~ Route_Type)+
+  theme_bw()
+
+ggsave(here("output/plot2.png"), device = "png")
+```
+
+
+
